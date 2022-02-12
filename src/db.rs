@@ -1,5 +1,5 @@
-use rusqlite::{Connection, Error as SqliteError, OpenFlags, Result as SqliteResult};
-use std::path::{Path, PathBuf};
+use rusqlite::{Connection, Error as SqliteError};
+use std::path::Path;
 use thiserror::Error;
 
 pub struct DB {
@@ -25,7 +25,7 @@ pub mod default_paths {
 
     #[cfg(target_os = "linux")]
     fn chrome_dir() -> Result<PathBuf> {
-        let mut dir = home_dir().ok_or_else(|| DBError::HomeDirError)?;
+        let mut dir = home_dir().ok_or(DBError::HomeDirError)?;
         dir.push(".config/BraveSoftware/Brave-Browser/Default");
         Ok(dir)
     }
@@ -42,17 +42,8 @@ impl DB {
     where
         P: AsRef<Path>,
     {
-        let conn_str = format!("'file:{}?immutable=1&mode=ro'", dbpath.as_ref().display());
+        let conn_str = format!("file:{}?immutable=1&mode=ro", dbpath.as_ref().display());
         let conn = Connection::open(conn_str)?;
         Ok(Self { conn })
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    #[test]
-    fn test_db() {
-        let db = DB::new(default_paths::history().unwrap());
     }
 }

@@ -3,10 +3,10 @@ mod cmd;
 mod db;
 mod history;
 
-use chrono::Utc;
 use clap::Parser;
 use cmd::*;
 use db::*;
+use history::*;
 use std::io::{stdout, Error as IOError, Write};
 use std::path::PathBuf;
 use thiserror::Error;
@@ -15,6 +15,9 @@ use thiserror::Error;
 pub enum CmdError {
     #[error("{0}")]
     DBError(#[from] DBError),
+
+    #[error("{0}")]
+    HistoryError(#[from] HistoryError),
 
     #[error("{0}")]
     IOError(#[from] IOError),
@@ -32,23 +35,13 @@ struct Opts {
 #[derive(Parser, Debug)]
 enum SubCommand {
     #[clap(about = "Show histories")]
-    History(History),
+    History(HistoryArg),
 }
 
-fn show_only_path<W>(dest: &mut W, path: &str, _: f64) -> Result<()>
-where
-    W: Write,
-{
-    writeln!(dest, "{path}")?;
-    Ok(())
-}
-
-fn show_with_score<W>(dest: &mut W, path: &str, score: f64) -> Result<()>
-where
-    W: Write,
-{
-    writeln!(dest, "{score}    {path}")?;
-    Ok(())
+fn string_to_path(s: String) -> PathBuf {
+    let mut pathbuf = PathBuf::new();
+    pathbuf.push(s);
+    pathbuf
 }
 
 fn run() -> Result<()> {
@@ -56,15 +49,25 @@ fn run() -> Result<()> {
     match opts.subcmd {
         SubCommand::History(history) => {
             let db_path = match history.db_path {
-                Some(db_path) => {
-                    let mut pathbuf = PathBuf::new();
-                    pathbuf.push(db_path);
-                    pathbuf
-                }
+                Some(db_path) => string_to_path(db_path),
                 None => default_paths::history()?,
             };
 
-            let mut db = DB::new(db_path)?;
+            let db = DB::new(db_path)?;
+            let histories = fetch_history(&db, history.limit)?;
+
+            let stdout = stdout();
+            let mut stdout_lock = stdout.lock();
+            for each in histories {
+                writeln!(
+                    stdout_lock,
+                    "{url}\t{title}\t{last_visit_time}\t{visit_count}",
+                    url = each.url,
+                    title = each.title,
+                    last_visit_time = each.last_visit_time,
+                    visit_count = each.visit_count
+                )?;
+            }
         }
     }
     Ok(())
