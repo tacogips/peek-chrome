@@ -28,6 +28,8 @@ pub type Result<T> = std::result::Result<T, CmdError>;
 #[derive(Parser, Debug)]
 #[clap(version = "0.1.0", author = "tacogips")]
 struct Opts {
+    #[clap(short, long)]
+    pub delimiter: Option<String>,
     #[clap(subcommand)]
     subcmd: SubCommand,
 }
@@ -58,14 +60,16 @@ fn run() -> Result<()> {
 
             let stdout = stdout();
             let mut stdout_lock = stdout.lock();
+            let delimiter = opts.delimiter.unwrap_or_else(|| "\t".to_string());
             for each in histories {
                 writeln!(
                     stdout_lock,
-                    "{url}\t{title}\t{last_visit_time}\t{visit_count}",
+                    "{url}{delimiter}{title}{delimiter}{last_visit_time}{delimiter}{visit_count}",
                     url = each.url,
                     title = each.title,
                     last_visit_time = each.last_visit_time,
-                    visit_count = each.visit_count
+                    visit_count = each.visit_count,
+                    delimiter = delimiter
                 )?;
             }
         }
