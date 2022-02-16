@@ -52,16 +52,3 @@ pub fn fetch_history(db: &DB, limit: Option<usize>) -> Result<Vec<History>> {
     }
     Ok(scores)
 }
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_db() {
-        let db = DB::new(default_paths::history().unwrap()).unwrap();
-        let histories = fetch_history(&db, None).unwrap();
-        //TODO(tacogips) for debugging
-        println!("==== {:?}", histories);
-    }
-}
