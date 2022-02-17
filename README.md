@@ -1,6 +1,8 @@
-## peek chrome data
-
-The frecensy algorithm based on https://wiki.mozilla.org/User:Jesse/NewFrecency
+## Peeking Chrome(Brave) data
+- [x] History
+- [ ] Cookies
+- [ ] Bookmarks
+- [ ] Etc
 
 
 ### Install
